@@ -129,7 +129,7 @@ range2 = apply(df[,c(1,3:7)],2,range)
 mean2 = apply(df[,c(1,3:7)],2,mean)
 sd2 = apply(df[,c(1,3:7)],2,sd)
 
-Qunatitative_predictor = c('mpg','cylinders', 'displacement', 'horsepower','weight','acceleration','year')
+Qunatitative_predictor = c('mpg', 'displacement', 'horsepower','weight','acceleration','year')
 Range = c('11.0-46.0','68-455', '46-230', '1649-4997', '8.5-24.8','70-82')
 Mean = c(24.404430,187.240506, 100.721519, 2935.971519, 15.726899, 77.145570)
 SD = c(7.867283, 99.678367, 35.708853, 811.300208, 2.693721, 3.106217)
