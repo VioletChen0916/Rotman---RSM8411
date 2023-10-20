@@ -3,7 +3,7 @@ title: "RSM8512 Assignment - Linear Regression"
 author:
   - Yanbing Chen
   - '1009958752'
-  - "2023/10/02"
+  - "2023/10/07"
 linestretch: 1.25
 fontsize: 11pt
 geometry: margin=2.5cm
@@ -22,6 +22,9 @@ library(tidyverse)
 library(ggplot2)
 library(magrittr)
 library(dplyr)
+library(GGally)
+library(gridExtra)
+library(magick)
 ```
 
 ##  Question 1 [25 marks]
@@ -35,28 +38,28 @@ The p-value of TV and radio is <0.0001, which means that we should reject null h
 
 ##  Question 3 [25 marks]
 
-Suppose we have a data set with five predictors, X1 =GPA, X2 = IQ, X3 = Gender (1 for Female and 0 forMale), X4 = Interaction between GPA and IQ, and X5 = Interaction between GPA and Gender. The response is starting salary after graduation (in thousands of dollars). Suppose we use least squares to fit the model, and get
+Suppose we have a data set with five predictors, X1 =GPA, X2 = IQ, X3 = Level (1 for College and 0 for High School), X4 = Interaction between GPA and IQ, and X5 = Interaction between GPA and Level. The response is starting salary after graduation (in thousands of dollars). Suppose we use least squares to fit the model, and get
 $$\hat{\beta}_0 = 50, \quad \hat{\beta}_1 = 20, \quad \hat{\beta}_2 = 0.07, \quad \hat{\beta}_3 = 35, \quad \hat{\beta}_4 = 0.01, \quad \hat{\beta}_5 = -10$$
 
 (a) Which answer is correct, and why? 
 
-i. For a fixed value of IQ and GPA, males earn more on average than females. 
-ii. For a fixed value of IQ and GPA, females earn more on average than males.
-iii. For a fixed value of IQ and GPA, males earn more on average than females provided that the GPA is high enough. 
-iv. For a fixed value of IQ and GPA, females earn more on average than males provided that the GPA is high enough. 
+i. For a fixed value of IQ and GPA, high school graduates earn more on average than college graduates. 
+ii. For a fixed value of IQ and GPA, college graduates earn more on average than high school graduates.
+iii. For a fixed value of IQ and GPA, high school graduates earn more on average than college graduates provided that the GPA is high enough. 
+iv. For a fixed value of IQ and GPA, college graduates earn more on average than high school graduates provided that the GPA is high enough. 
 
 **Answer:** We can generate a model based on the info above: $$ Y = 50 + 20*X1 + 0.07*X2+ 35*X3 + 0.01*X1*X2 -10*X1*X3$$
 
 $$salary(x_3=0) = 50 + 20*X1 + 0.07*X2 + 0.01*X1*X2 -10*X1*X3$$
 $$salary(x_3=1) = 50 + 20*X1 + 0.07*X2+ 35 + 0.01*X1*X2 -10*X1*X3$$
 $$salary = salary(x_3=0) - salary(x_3=1) = 35$$
-Therefore, iii is correct, when GPA is high enough, males earn more on average than females.
+Therefore, iii is correct, when GPA is high enough, college graduates earn more on average than high school graduates.
 
-(b) Predict the salary of a female with IQ of 110 and a GPA of 4.0.
+(b) Predict the salary of a high school graduates with IQ of 110 and a GPA of 4.0.
 
 **Answer:**
 $$salary = 50 + 20*4.0 + 0.07*110+ 35*1 + 0.01*4.0*110 -10*4.0*1 = 137.1 $$
- The salary of a female with IQ of 110 and a GPA of 4.0 is 137.1.
+ The salary of a high school graduates with IQ of 110 and a GPA of 4.0 is 137.1.
 
 (c) True or false: Since the coefficient for the GPA/IQ interaction term is very small, there is very little evidence of an interaction effect. Justify your answer.
 
@@ -66,8 +69,11 @@ $$salary = 50 + 20*4.0 + 0.07*110+ 35*1 + 0.01*4.0*110 -10*4.0*1 = 137.1 $$
 ##  Question 6 [25 marks] 
 Using (3.4), argue that in the case of simple linear regression, the least squares line always passes through the point $(\bar{x}, \bar{y})$.
 
-
-
+```{r}
+img <- image_read("Linear Regression Q3.png")
+plot(1:10, type="n", ann=FALSE)  
+rasterImage(as.raster(img), 1, 1, 10, 10) 
+```
 
 
 ##  Question 8  [25 marks]
@@ -119,7 +125,7 @@ x=rnorm (100)
 y=2*x+rnorm (100)
 ```
 
-(a) Perform a simple linear regression of y onto x, without an intercept. Report the coefficient estimate \(\hat{\beta}\), the standard error of this coefficient estimate, and the t-statistic and p-value associated with the null hypothesis \(H_0 : \beta = 0\). Comment on these results. (You can perform regression without an intercept using the command lm(y∼x+0).
+(a) Perform a simple linear regression of y onto x, without an intercept. Report the coefficient estimate \(\hat{\beta}\), the standard error of this coefficient estimate, and the t-statistic and p-value associated with the null hypothesis \(H_0 : \beta = 0\). Comment on these results. (You can perform regression without an intercept using the command $lm(y∼x+0)$.
 
 ```{r}
 lm1 = lm(y~x+0)
@@ -151,9 +157,9 @@ $$\text{SE}(\hat{\beta}) = \sqrt{\frac{\sum_{i=1}^{n}(y_i-x_i\hat{\beta})^2}{(n-
 
 (These formulas are slightly different from those given in Sections 3.1.1 and 3.1.2, since here we are performing regression without an intercept.) Show algebraically, and confirm numerically in R, that the t-statistic can be written as
 
-$$ t= \frac{(\sqrt{n-1})\sum_{i=1}^{n}x_iy_i}{\sqrt{(\sum_{i=1}^{n})(\sum_{i'=1}^{n}y_{i'}^2)-(\sum_{i'=1}^{n}x_{i'}y_{i'})^2}}$$
+$$ t= \frac{(\sqrt{n-1})\sum_{i=1}^{n}x_iy_i}{\sqrt{(\sum_{i=1}^{n}x_i^2)(\sum_{i'=1}^{n}y_{i'}^2)-(\sum_{i'=1}^{n}x_{i'}y_{i'})^2}}$$
 **Answer:**
-Based on the two formula above, we have $$ t = \frac{\beta}{\text{SE}({\beta})} = \frac{\sqrt{n-1}\sum{x_iy_i}}{\sqrt{\sum{x_i^2\sum{y_i^2}}-(\sum{x_iy_i})^2}}$$
+Based on the two formula above, we have $$t = \frac{\beta}{\text{SE}({\beta})} = \frac{\sqrt{n-1}\sum{x_iy_i}}{\sqrt{\sum{x_i^2\sum{y_i^2}}-(\sum{x_iy_i})^2}}$$
 
 ```{r}
 (sqrt(length(x)-1) * sum(x*y)) / (sqrt(sum(x*x) * sum(y*y) - (sum(x*y))^2))
@@ -170,7 +176,7 @@ The t-statistic is 18.72593.
 
 The t-statistics for x onto y is 18.7253.
 
-(f) In R, show that when regression is performed with an intercept, the t-statistic for \(H_1 : \beta = 0\) is the same for the regression of y onto x as it is for the regression of x onto y.
+(f) In R, show that when regression is performed with an intercept, the t-statistic for \(H_0 : \beta_1 = 0\) is the same for the regression of y onto x as it is for the regression of x onto y.
 
 ```{r}
 lm3 = lm(y~x)
@@ -285,7 +291,7 @@ plot(predict(model_d), rstudent(model_d))
 plot(predict(model_e), rstudent(model_e))
 ```
 
-By checking the residual plots, we do not find there is outlier observed,
+By checking the residual plots above, we find only model_c(y~x1+x2) has outlier observation.
 
 
 
