@@ -1,0 +1,177 @@
+---
+title: "RSM8512 Assignment - Non-Linearity "
+author:
+  - Yanbing Chen
+  - '1009958752'
+  - "2023/11/24"
+linestretch: 1.25
+fontsize: 11pt
+geometry: margin=2.5cm
+output: 
+  pdf_document:
+    template: NULL
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{fontspec}
+  - \setmainfont{Times New Roman}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 2 [15 marks]
+Suppose that a curve ${\hat{g}}$ is computed to smoothly fit a set of $n$ points using the following formula:
+
+$$ {\hat{g}} = \text{argmin}(\sum_{i=1}^n(y_i-g(x_i))^2 +\lambda\int[g^{m}(x)]^2\,dx)  $$
+where $g^{m}$ represents the $m$th derivative of $g$ (and $g^{0} = g$). Provide example sketches of $\hat{g}$ in each of the following scenarios.
+
+(a) $\lambda = \infty, m = 0$
+
+**Answer:** The minimization is purely based on the fit to the data points, ignoring the smoothness. The regularization term $\lambda$ is not relevant here b/c $m=0$ (we are looking at $g(x)$ itself, not its derivatives). In this case, $\hat g(x)$ would closely fit the data points but won't necessarily be proportional to $x^2$ since the regularization doesn't enforce any smoothness. Summarily, $g(x) = k$ because RSS term is ignored and $g(x) = k$ would minimize the area uner the cruve of $g^{(0)}$.
+
+(b) $\lambda = \infty, m = 1$
+
+**Answer:** $g(x)$ would be quadratic to minimize the area under the curve of its first derivative. This scenario minimizes the first derivative, which would lead to a function where the first derivative is constant. However, b/c $\lambda$ is infinite, the solution would be to have the first derivative as close to zero as possible. Since $\hat g(x)$ must be proportional to $x^2$, the only solution that satisfies this with a constant (and effectively zero) first derivative is $\hat g(x) = 0$.
+
+
+(c) $\lambda = \infty, m = 2$
+
+**Answer:** $g(x)$ would be cubic to minimize the area under the curve of its second derivative. The minimization of the second derivative (the curvature) is enforced. Since  $\hat g(x)$ is proportional to $x^2$, its second derivative is a constant. However, with an infinite $\lambda$, any non-zero curvature would lead to an infinite penalty, so the only solution is a curve wiht zero curvature, which is again $\hat g(x) = 0$, a flat line.
+
+
+(d) $\lambda = \infty, m = 3$
+
+**Answer:**  $g(x)$ would be quartic to minimize the area under the curve of its third derivative. The condition minimizes the third derivative. Since the third derivative of  $\hat g(x)$ proportional to $x^2$ is zero, this condition is naturally satisfied. So in this case, $\hat g(x)$ could be any multiple of $x^2$.
+
+(e) $\lambda = \infty, m = 3$
+
+**Answer:**  As in (d), the penalty term no longer matters. This is the formula for linear regression, to choose $g$ based on minimizing RSS.
+
+## Quesiton 3 [7 marks]
+Suppose we fit a curve with basis functions $b_1(X) = X, b_2(X) = (X-1)^2I(X\geq1)$. (Note taht $I(X\geq 1)$ equals 1 for $X \geq1$ and 0 otherwise.) We fit the linear regression model
+$$ Y = \beta_0 + \beta_1b_1(X) + \beta_2b_2(X) +\epsilon$$
+and obtain coefficient estimates $\hat{\beta_0} = 1$, $\hat{\beta_1} =1$, $\hat{\beta_2} = -2$. Sketch the estimated curve between $X = -2$ and $X=2$. Note the intercepts, slopes, and other relevant information.
+
+```{r}
+x = -2:2
+beta_0 = 1
+beta_1 = 1
+beta_2 = -2
+y = beta_0 + beta_1*x + beta_2*(x-1)^2*I(x>1)
+plot(x, y)
+```
+
+
+
+
+## Question 9 [18 marks]
+
+This question uses the variables $dis$ (the weighted mean of distances to five Boston employment centers) and $nox$ (nitrogen oxides concentration in parts per 10 million) from the $Boston$ data. We will treat $dis$ as the predictor and nox as the response.
+
+```{r, echo=FALSE}
+set.seed(1234)
+library(MASS)
+attach(Boston)
+```
+
+
+(a) Use the poly() function to fit a cubic polynomial regression to predict $nox$ using $dis$. Report the regression output, and plot the resulting data and polynomial fits.
+
+```{r}
+#head(Boston)
+fit = lm(nox~poly(dis,3), data = Boston)
+summary(fit)
+```
+
+From the summary above, we can see that all polynomial term have p-value less than 0.05, which are significant enough for predicting $nox$.
+
+```{r}
+dislims = range(dis)
+dis.grid= seq(from = dislims[1], to = dislims[2], by = 0.1)
+preds = predict(fit, list(dis = dis.grid))
+plot(nox ~ dis, data = Boston, col = 'darkgrey')
+lines(dis.grid, preds, col = "red", lwd = 2)
+```
+
+The curve in the plot is smooth which proves it fit the data well.
+
+(b) Plot the polynomial fits for a range of different polynomial degrees (say, from 1 to 10), and report the associated residual sum of squares.
+
+```{r}
+rss = rep(NA,10)
+
+for (i in 1:10){
+  fit = lm(nox~poly(dis,i), data = Boston)
+  rss[i] = round(sum(fit$residuals^2),3)
+}
+print(rss)
+
+```
+
+RSS decreases with the increase of the degree of polynomial.
+
+(c) Perform cross-validation or another approach to select the optimal degree for the polynomial, and explain your results.
+
+```{r}
+library(boot)
+cv = rep(NA, 10)
+
+for (i in 1:10){
+  fit = glm(nox~poly(dis, i), data = Boston)
+  cv[i] = cv.glm(Boston, fit, K=10)$delta[2]
+}
+plot(1:10, cv, xlab = "Degree", ylab = "CV error", type = "l", pch = 20, lwd = 2)
+```
+From the plot we can see the CV error decreases at degrees 1 to 5. When it reaches degree of 5, it turns up to an upward trend, which means the cv error increases with the degree increases.
+
+(d) Use the $bs()$ function to fit a regression spline to predict $nox$ using $dis$. Report the output for the fit using four degrees of freedom. How did you choose the knots? Plot the resulting fit.
+
+
+```{r}
+library(splines)
+fit = lm(nox~bs(dis, df = 4, knots = c(4,7,11)), data = Boston)
+summary(fit)
+```
+
+```{r}
+dislims = range(dis)
+dis.grid= seq(from = dislims[1], to = dislims[2], by = 0.1)
+preds = predict(fit, list(dis = dis.grid))
+plot(nox ~ dis, data = Boston, col = 'darkgrey')
+lines(dis.grid, preds, col = "red", lwd = 2)
+```
+
+The summary shows that all terms in spline fit are significant. Plot shows that the spline fits data well except at the extreme values of dis, (especially dis>10).
+
+(e) Now fit a regression spline for a range of degrees of freedom, and plot the resulting fits and report the resulting RSS. Describe the results obtained.
+
+```{r}
+rss_new = rep(NA,16)
+
+for (i in 3:16){
+  fit = lm(nox~poly(dis,df = i), data = Boston)
+  rss_new[i] = round(sum(fit$residuals^2),3)
+}
+rss_new[-c(1,2)]
+```
+Train RSS monotonically decreases till df=14 and then slightly increases for df=15 and df=16.
+
+(f) Perform cross-validation or another approach in order to select the best degrees of freedom fro a regression spline on this data.
+
+
+```{r}
+cv_new = rep(NA, 16)
+
+for (i in 3:16){
+  fit= glm(nox~bs(dis, i), data = Boston)
+  cv_new[i] = cv.glm(Boston, fit,K=10)$delta[2]
+}
+
+plot(3:16, cv_new[-c(1, 2)], lwd = 2, type = "l", xlab = "df", ylab = "CV error")
+```
+
+
+
+
+
